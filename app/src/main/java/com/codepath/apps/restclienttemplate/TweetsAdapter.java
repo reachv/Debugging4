@@ -53,11 +53,11 @@ public class TweetsAdapter extends RecyclerView.Adapter<TweetsAdapter.ViewHolder
 
     public void addAll(List<Tweet> tweetList){
         tweets.addAll(tweetList);
-
+        notifyDataSetChanged();
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
-        TextView ivProfileImage;
+        ImageView ivProfileImage;
         TextView tvBody;
         TextView tvScreenName;
         TextView tvTime;

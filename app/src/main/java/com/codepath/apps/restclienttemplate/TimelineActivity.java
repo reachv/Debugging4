@@ -41,6 +41,7 @@ public class TimelineActivity extends AppCompatActivity {
     List<Tweet> tweets;
     TweetsAdapter adapter;
     SwipeRefreshLayout swipeContainer;
+    EndlessRecyclerViewScrollListener scrollListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,10 +69,42 @@ public class TimelineActivity extends AppCompatActivity {
                 populateHomeTimeline();
             }
         });
-        rvTweets.setLayoutManager(new LinearLayoutManager(this));
+        LinearLayoutManager LayoutManager = new LinearLayoutManager(this);
+        rvTweets.setLayoutManager(LayoutManager);
         rvTweets.setAdapter(adapter);
 
-        populateHomeTimeline();
+
+
+        scrollListener = new EndlessRecyclerViewScrollListener(LayoutManager) {
+            @Override
+            public void onLoadMore(int page, int totalItemsCount, RecyclerView view) {
+                Log.i("TimeLineActivity", "OnLoadMore" + page);
+                loadMoreData();
+            }
+        };
+
+        rvTweets.addOnScrollListener(scrollListener);
+
+    }
+
+    private void loadMoreData() {
+        client.getNextPageOfTweets(new JsonHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Headers headers, JSON json) {
+                JSONArray jsonArray = json.jsonArray;
+                try {
+                    List<Tweet> tweets = Tweet.fromJsonArray(jsonArray);
+                    adapter.addAll(tweets);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onFailure(int statusCode, Headers headers, String response, Throwable throwable) {
+
+            }
+        }, tweets.get(tweets.size()-1).id);
     }
 
     @Override
@@ -109,7 +142,7 @@ public class TimelineActivity extends AppCompatActivity {
         Intent intent = new Intent(this, ComposeActivity.class);
         someActivityResultLauncher.launch(intent);
     }
-    private void populateHomeTimeline() {
+    private void populateHomeTimeline () {
         client.getHomeTimeline(new JsonHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Headers headers, JSON json) {
